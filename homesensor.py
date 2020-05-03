@@ -5,15 +5,42 @@ from flask import Flask, render_template
 from flask import request,redirect
 import xml.etree.ElementTree as ET
 
-
-
 app = Flask(__name__)
-
 
 @app.route("/")
 def root():
     return render_template('home.html')
 
+@app.route("/compareDay", methods=['GET','POST'])
+def compareDay():
+    date = request.args.get('date')
+    response = requests.get("http://127.0.0.1:5000/getDataDay?date="+date)
+    print("2")
+    df = pd.read_csv('meandata.csv')
+    print("3")
+    tempmean = {}
+    for i in range(1,10):
+        col = "temp_"+str(i)
+        colmean = df.loc[:,col].mean()
+        tempmean[col] = colmean
+        print("4-9")
+    response = requests.get("http://api.worldweatheronline.com/premium/v1/past-weather.ashx?q=13676&date="+date+"&key=0cade1f7eea64fb885a221156200205")
+    apidata = ET.fromstring(str(response.text))
+    print("6")
+    #print(apidata)
+    temphr = apidata.find('weather/avgtempF').text
+    #print(temphr)
+    temploc = {"temp_1":"Basement center", "temp_2":"Floor 2", "temp_3":"Floor 1 (on the floor)", "temp_4":"Garage", "temp_5":"Attic crawl space", "temp_6":"Furnace output air duct", "temp_7":"Basement exterior wall", "temp_8":"Outside air temperature", "temp_9":"Floor 1 (ceiling) until 12-2019 then moved to first floor closet" }
+    html = '<html><style>th, td {padding: 8px;text-align: left;border-bottom: 1px solid #ddd;}</style><body><table style="border-collapse: collapse;width: 100%;"><tr><th>Location</th><th>Description</th><th>Temperature</th><th>Temperature outside</th><th>Result</th></tr>'
+    for key,value in tempmean.items():
+        print("8")
+        html+='<tr><td>'+str(key)+'</td><td>'+temploc[key]+'</td><td>'+str(round(value,1))+'</td><td>'+str(temphr)+'</td>'
+        if int(value) > int(temphr):
+            html += '<td style="color:white;background-color:red">Hotter than outside</td></tr>'
+        else:
+            html += '<td style="color:white;background-color:blue">Colder than outside or similar</td></tr>'
+    html+= '</table></body></html>'
+    return html
 
 @app.route("/compareHour", methods=['GET','POST'])
 def comparehour():
@@ -56,14 +83,16 @@ def comparehour():
             #print(time)
             temphr = hourly.find('tempF').text
             #print(temphr)
-    html = '<html><body><table>'
+    temploc = {"temp_1":"Basement center", "temp_2":"Floor 2", "temp_3":"Floor 1 (on the floor)", "temp_4":"Garage", "temp_5":"Attic crawl space", "temp_6":"Furnace output air duct", "temp_7":"Basement exterior wall", "temp_8":"Outside air temperature", "temp_9":"Floor 1 (ceiling) until 12-2019 then moved to first floor closet" }
+    html = '<html><style>th, td {padding: 8px;text-align: left;border-bottom: 1px solid #ddd;}</style><body><table style="border-collapse: collapse;width: 100%;"><tr><th>Location</th><th>Temperature</th><th>Temperature outside</th><th>Result</th></tr>'
+    html = '<html><style>th, td {padding: 8px;text-align: left;border-bottom: 1px solid #ddd;}</style><body><table style="border-collapse: collapse;width: 100%;"><tr><th>Location</th><th>Description</th><th>Temperature</th><th>Temperature outside</th><th>Result</th></tr>'
     for key,value in tempmean.items():
         print("8")
-        html+='<tr><td>'+str(key)+'</td><td>'+str(round(value,1))+'</td><td>'+str(temphr)+'</td>'
+        html+='<tr><td>'+str(key)+'</td><td>'+temploc[key]+'</td><td>'+str(round(value,1))+'</td><td>'+str(temphr)+'</td>'
         if int(value) > int(temphr):
-            html += '<td style="background-color:red">Hotter than outside</td></tr>'
+            html += '<td style="color:white;background-color:red">Hotter than outside</td></tr>'
         else:
-            html += '<td style="background-color:blue">Colder than outside or similar</td></tr>'
+            html += '<td style="color:white;background-color:blue">Colder than outside or similar</td></tr>'
     html+= '</table></body></html>'
     return html
 
@@ -100,7 +129,6 @@ def getdatahour():
     print("1")
     return mean
 
-
 @app.route("/getDataDay", methods=['GET','POST'])
 def getdataday():
     date = request.args.get('date')
@@ -130,7 +158,6 @@ def getdataday():
     mean = df.mean(axis = 0).to_json()
     print("1")
     return mean
-
 
 if __name__ == "__main__":
     app.run(host='127.0.0.1',debug=True)
