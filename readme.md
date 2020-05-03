@@ -139,7 +139,17 @@ __Big data processing is very significant these days. There are sotwares/applica
 #### Purpose/Application:
 
 ### 3. Flask Application for API:
-
-
 #### Execution and Explanation:
+The Flask application has 5 endpoints and one home(root).
+##### 1. Home - Root:
+At this endpoint `Home.html` file is rendered and this .html file contains API and endpoint documentation
+```python
+@app.route("/")
+def root():
+    return render_template('home.html')
+```
+Result at: `http://127.0.0.1:5000/`
+![Home]('images/flaskhome.png')
+
+ ##### 2. 
 #### Purpose/Application:
