@@ -149,7 +149,7 @@ def root():
     return render_template('home.html')
 ```
 Result at: `http://127.0.0.1:5000/`
-![Home]('images/../images/flaskhome.png')
+![Home](images/../images/flaskhome.png)
 
  ##### 2. 
 #### Purpose/Application:
