@@ -14,9 +14,9 @@
         + compareDay - compare average day home temperature data with weather that day.
 
 
-## Steps:
+## Big Data Processing:
 
-### 1. ETL:
+### 1. ETL and Data cleaning:
 #### Execution and Explanation:
 Since there were lot of files in one folder(actual data source - HOMESENSOR) I have used `os` library to go though each .txt file in the directory. 
 ```python
@@ -125,3 +125,21 @@ def write_file(json_list, file_name, c):
 			csv_writer.writerow(row.values())
 	data_file.close()
 ```
+
+There is another way to write json list into CSV file using pandas, but it takes significance amount of time and I also data inconsistancy and data loss with those CSV files.
+```python
+pandas.read_json(json.dumps(print_reading)).to_csv('P_PrintReading.csv', index= None, header= True)
+```
+
+#### Purpose/Application:
+__Big data processing is very significant these days. There are sotwares/applications which handles enterprice level big data but this give us ability of understand what happends behind the scene. Null or garbage data from data soruces are no suprise in these big data so cleaning data becomes significantly important for future use or analysis.__
+
+### 2. Data Sampling:
+#### Execution and Explanation:
+#### Purpose/Application:
+
+### 3. Flask Application for API:
+
+
+#### Execution and Explanation:
+#### Purpose/Application:
