@@ -136,7 +136,15 @@ __Big data processing is very significant these days. There are sotwares/applica
 
 ### 2. Data Sampling:
 #### Execution and Explanation:
-#### Purpose/Application:
+Resampling is done to reduce the data at a fix interval, such as daily, weekly, monthly or even yearly. It helps to squeeze the data and the big picture from the data.
+```python
+def parser(x):
+    return datetime.strptime(x, '%Y-%m-%d %H:%M:%S')
+data = pd.read_csv('Print_Reading.csv',parse_dates =["pitime"], index_col ="pitime", low_memory=False, date_parser=parser)
+data.head()
+monthly_resample = data.resample('M')
+monthly_resample
+```
 
 ### 3. Flask Application for API:
 #### Execution and Explanation:
@@ -242,7 +250,37 @@ def comparehour():
         colmean = jd[col]
         tempmean[col] = colmean
 ```
+
 Second to get historical weather data, I am requesting from api.worldweatheronline.com website. This website return API in XML format.
+Here is the colapsed version of that XML API:
+
+```xml
+<data>
+  <request>...</request>
+  <weather>
+    <date>2019-01-20</date>
+    <astronomy>...</astronomy>
+    <maxtempC>-18</maxtempC>
+    <maxtempF>-0</maxtempF>
+    <mintempC>-21</mintempC>
+    <mintempF>-5</mintempF>
+    <avgtempC>-20</avgtempC>
+    <avgtempF>-3</avgtempF>
+    <totalSnow_cm>23.4</totalSnow_cm>
+    <sunHour>3.5</sunHour>
+    <uvIndex>1</uvIndex>
+    <hourly>...</hourly>
+    <hourly>...</hourly>
+    <hourly>...</hourly>
+    <hourly>...</hourly>
+    <hourly>...</hourly>
+    <hourly>...</hourly>
+    <hourly>...</hourly>
+    <hourly>...</hourly>
+  </weather>
+</data>
+```
+
 Since I want to get hourly weather data and this website only give hourly data at 0(12 am),300(03 am),600(06 am),900(09 am),1200(12 pm),1500(03 pm),1800(06 pm),2100(9 pm), so I have to match hour parameter given to compareHour to the nearest of these. After that I am simply comparing and displaying as HTML
 ```python
 hr = 0
@@ -329,3 +367,4 @@ response2 = requests.get("http://api.worldweatheronline.com/premium/v1/past-weat
 ![Home](images/../images/flaskcompareday.png)
 
 #### Purpose/Application:
+The sole purpose of creating flask application for this data set is to create API. This API can be used in many different ways just as I did to compare the temperature of different location in the house with the weather in Potsdam. The real world application of API is huge. One simple example is the weather API I used to get historic data. API makes it easy to interact with big amount of data, as you can request particular data from a huge data source.
