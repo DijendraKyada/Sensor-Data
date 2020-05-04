@@ -148,8 +148,184 @@ At this endpoint `Home.html` file is rendered and this .html file contains API a
 def root():
     return render_template('home.html')
 ```
-Result at: `http://127.0.0.1:5000/`
+>Result at: `http://127.0.0.1:5000/`
+
 ![Home](images/../images/flaskhome.png)
 
- ##### 2. 
+##### 2. getDataHour:
+This returns average data of the given hour of the day as json list. This endpoint accepts 2 arguments, date and hour. 
+```python
+@app.route("/getDataHour", methods=['GET','POST'])
+def getdatahour():
+    date = request.args.get('date')
+    hour = request.args.get('hour')
+    reader = csv.DictReader(open("Print_Reading.csv"))
+    file = open('meandata.csv','w+')
+    file.close()
+    i = 1
+    j = 1
+    for line in reader:
+        if i ==1:
+            file = open('meandata.csv','a+')
+            writer = csv.writer(file)
+            writer.writerow(line.keys())
+            file.close()
+            i = 0
+        rdate = line['pitime'].split(' ')[0]
+        if rdate == date:
+            rhour = line['pitime'].split(' ')[1][:2]
+            if rhour == hour:
+                j+=1
+                file = open('meandata.csv','a+')
+                writer = csv.writer(file)
+                writer.writerow(line.values())
+                file.close()
+                if j == 60:
+                    break
+    df = pd.read_csv('meandata.csv')
+    mean = df.mean(axis = 0).to_json()
+    return mean
+```
+
+Try running this flask app and give this url:
+> `http://127.0.0.1:5000/getDataHour?date=2019-01-20&hour=03`
+
+##### 2. getDataDay:
+This returns average data of the given day as json list. This endpoint accepts 1 arguments date.
+```python
+@app.route("/getDataDay", methods=['GET','POST'])
+def getdataday():
+    date = request.args.get('date')
+    reader = csv.DictReader(open("Print_Reading.csv"))
+    file = open('meandata.csv','w+')
+    file.close()
+    i = 1
+    j = 1
+    for line in reader:
+        if i ==1:
+            file = open('meandata.csv','a+')
+            writer = csv.writer(file)
+            writer.writerow(line.keys())
+            file.close()
+            i = 0
+        rdate = str(line['pitime'].split(' ')[0])
+        if rdate == date:
+            j+=1
+            file = open('meandata.csv','a+')
+            writer = csv.writer(file)
+            writer.writerow(line.values())
+            file.close()
+            if j == 1440:
+                break
+    df = pd.read_csv('meandata.csv')
+    mean = df.mean(axis = 0).to_json()
+    return mean
+```
+Try running this flask app and give this url:
+> `http://127.0.0.1:5000/getDataDay?date=2019-01-20`
+
+##### 3. compareHour:
+This shows comparision of the average home temperature of the given hour of the day with the weather that hour of the day in Potsdam.
+To compare this endpoint get responses from 2 sources.
+First from this application's getDataHour endpoint, to get the average home temperature of the hour of the day.
+```python
+@app.route("/compareHour", methods=['GET','POST'])
+def comparehour():
+    date = request.args.get('date')
+    hour = request.args.get('hour')
+    response = requests.get("http://127.0.0.1:5000/getDataHour?date="+date+"&hour="+hour)
+    jd = json.loads(response.text)
+    tempmean = {}
+    #to store all temperature in different dictionary
+    for i in range(1,10):
+        col = "temp_"+str(i)
+        colmean = jd[col]
+        tempmean[col] = colmean
+```
+Second to get historical weather data, I am requesting from api.worldweatheronline.com website. This website return API in XML format.
+Since I want to get hourly weather data and this website only give hourly data at 0(12 am),300(03 am),600(06 am),900(09 am),1200(12 pm),1500(03 pm),1800(06 pm),2100(9 pm), so I have to match hour parameter given to compareHour to the nearest of these. After that I am simply comparing and displaying as HTML
+```python
+hr = 0
+    for hrr in range(0, 22, 3):
+        print("5-8")
+        hour = int(hour)
+        if hour == (hrr-1):
+            hr= hrr
+            break
+        elif hour == hrr:
+            hr= hrr
+            break
+        elif hour == (hrr+1):
+            hr = hrr
+            break
+        else:
+            pass
+    response = requests.get("http://api.worldweatheronline.com/premium/v1/past-weather.ashx?q=13676&date="+date+"&key=0cade1f7eea64fb885a221156200205")
+    apidata = ET.fromstring(str(response.text))
+    print("6")
+    #print(apidata)
+    for hourly in apidata.findall('weather/hourly'):
+        time = int(int(hourly.find('time').text)/100)
+        print("7")
+        if time == hr:
+            #print(time)
+            temphr = hourly.find('tempF').text
+            #print(temphr)
+    temploc = {"temp_1":"Basement center", "temp_2":"Floor 2", "temp_3":"Floor 1 (on the floor)", "temp_4":"Garage", "temp_5":"Attic crawl space", "temp_6":"Furnace output air duct", "temp_7":"Basement exterior wall", "temp_8":"Outside air temperature", "temp_9":"Floor 1 (ceiling) until 12-2019 then moved to first floor closet" }
+    html = '<html><style>th, td {padding: 8px;text-align: left;border-bottom: 1px solid #ddd;}</style><body><table style="border-collapse: collapse;width: 100%;"><tr><th>Location</th><th>Temperature</th><th>Temperature outside</th><th>Result</th></tr>'
+    html = '<html><style>th, td {padding: 8px;text-align: left;border-bottom: 1px solid #ddd;}</style><body><table style="border-collapse: collapse;width: 100%;"><tr><th>Location</th><th>Description</th><th>Temperature</th><th>Temperature outside</th><th>Result</th></tr>'
+    for key,value in tempmean.items():
+        print("8")
+        html+='<tr><td>'+str(key)+'</td><td>'+temploc[key]+'</td><td>'+str(round(value,1))+'</td><td>'+str(temphr)+'</td>'
+        if int(value) > int(temphr):
+            html += '<td style="color:white;background-color:red">Hotter than outside</td></tr>'
+        else:
+            html += '<td style="color:white;background-color:blue">Colder than outside or similar</td></tr>'
+    html+= '</table></body></html>'
+    return html
+```
+>Result at (in winters on Jan 30th 2019 at 07:00am): `http://127.0.0.1:5000/compareHour?date=2019-01-30&hour=07`
+
+![Home](images/../images/flaskcomparehour.png)
+
+##### 4. compareDay:
+Similar to compareHour but this enpoint compares at day level. And uses 2 sources
+First from this application's getDataDay endpoint, to get the average home temperature of the day.
+```python
+@app.route("/compareDay", methods=['GET','POST'])
+def compareDay():
+    date = request.args.get('date')
+    response = requests.get("http://127.0.0.1:5000/getDataDay?date="+date)
+    jd = json.loads(response.text)
+    tempmean = {}
+    #to store all temperature in different dictionary
+    for i in range(1,10):
+        col = "temp_"+str(i)
+        colmean = jd[col]
+        tempmean[col] = colmean
+```
+Second to get historical weather data, I am requesting from api.worldweatheronline.com website then simply compare and display as HTML
+```python
+response2 = requests.get("http://api.worldweatheronline.com/premium/v1/past-weather.ashx?q=13676&date="+date+"&key=0cade1f7eea64fb885a221156200205")
+    apidata = ET.fromstring(str(response2.text))
+    print("6")
+    #print(apidata)
+    temphr = apidata.find('weather/avgtempF').text
+    #print(temphr)
+    temploc = {"temp_1":"Basement center", "temp_2":"Floor 2", "temp_3":"Floor 1 (on the floor)", "temp_4":"Garage", "temp_5":"Attic crawl space", "temp_6":"Furnace output air duct", "temp_7":"Basement exterior wall", "temp_8":"Outside air temperature", "temp_9":"Floor 1 (ceiling) until 12-2019 then moved to first floor closet" }
+    html = '<html><style>th, td {padding: 8px;text-align: left;border-bottom: 1px solid #ddd;}</style><body><table style="border-collapse: collapse;width: 100%;"><tr><th>Location</th><th>Description</th><th>Temperature</th><th>Temperature outside</th><th>Result</th></tr>'
+    for key,value in tempmean.items():
+        print("8")
+        html+='<tr><td>'+str(key)+'</td><td>'+temploc[key]+'</td><td>'+str(round(value,1))+'</td><td>'+str(temphr)+'</td>'
+        if int(value) > int(temphr):
+            html += '<td style="color:white;background-color:red">Hotter than outside</td></tr>'
+        else:
+            html += '<td style="color:white;background-color:blue">Colder than outside or similar</td></tr>'
+    html+= '</table></body></html>'
+    return html
+```
+>Result at (in summer on July 30th 2019): `http://127.0.0.1:5000/compareDay?date=2019-07-30`
+
+![Home](images/../images/flaskcompareday.png)
+
 #### Purpose/Application:

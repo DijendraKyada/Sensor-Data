@@ -15,17 +15,14 @@ def root():
 def compareDay():
     date = request.args.get('date')
     response = requests.get("http://127.0.0.1:5000/getDataDay?date="+date)
-    print("2")
-    df = pd.read_csv('meandata.csv')
-    print("3")
+    jd = json.loads(response.text)
     tempmean = {}
     for i in range(1,10):
         col = "temp_"+str(i)
-        colmean = df.loc[:,col].mean()
+        colmean = jd[col]
         tempmean[col] = colmean
-        print("4-9")
-    response = requests.get("http://api.worldweatheronline.com/premium/v1/past-weather.ashx?q=13676&date="+date+"&key=0cade1f7eea64fb885a221156200205")
-    apidata = ET.fromstring(str(response.text))
+    response2 = requests.get("http://api.worldweatheronline.com/premium/v1/past-weather.ashx?q=13676&date="+date+"&key=0cade1f7eea64fb885a221156200205")
+    apidata = ET.fromstring(str(response2.text))
     print("6")
     #print(apidata)
     temphr = apidata.find('weather/avgtempF').text
@@ -47,16 +44,12 @@ def comparehour():
     date = request.args.get('date')
     hour = request.args.get('hour')
     response = requests.get("http://127.0.0.1:5000/getDataHour?date="+date+"&hour="+hour)
-    print("2")
-    #print(response.text)
-    df = pd.read_csv('meandata.csv')
-    print("3")
+    jd = json.loads(response.text)
     tempmean = {}
     for i in range(1,10):
         col = "temp_"+str(i)
-        colmean = df.loc[:,col].mean()
+        colmean = jd[col]
         tempmean[col] = colmean
-        print("4-9")
     hr = 0
     for hrr in range(0, 22, 3):
         print("5-8")
@@ -72,8 +65,8 @@ def comparehour():
             break
         else:
             pass
-    response = requests.get("http://api.worldweatheronline.com/premium/v1/past-weather.ashx?q=13676&date="+date+"&key=0cade1f7eea64fb885a221156200205")
-    apidata = ET.fromstring(str(response.text))
+    response2 = requests.get("http://api.worldweatheronline.com/premium/v1/past-weather.ashx?q=13676&date="+date+"&key=0cade1f7eea64fb885a221156200205")
+    apidata = ET.fromstring(str(response2.text))
     print("6")
     #print(apidata)
     for hourly in apidata.findall('weather/hourly'):
