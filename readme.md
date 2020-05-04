@@ -198,7 +198,7 @@ def getdatahour():
 Try running this flask app and give this url:
 > `http://127.0.0.1:5000/getDataHour?date=2019-01-20&hour=03`
 
-##### 2. getDataDay:
+##### 3. getDataDay:
 This returns average data of the given day as json list. This endpoint accepts 1 arguments date.
 ```python
 @app.route("/getDataDay", methods=['GET','POST'])
@@ -232,7 +232,7 @@ def getdataday():
 Try running this flask app and give this url:
 > `http://127.0.0.1:5000/getDataDay?date=2019-01-20`
 
-##### 3. compareHour:
+##### 4. compareHour:
 This shows comparision of the average home temperature of the given hour of the day with the weather that hour of the day in Potsdam.
 To compare this endpoint get responses from 2 sources.
 First from this application's getDataHour endpoint, to get the average home temperature of the hour of the day.
@@ -326,7 +326,7 @@ hr = 0
 
 ![Home](images/../images/flaskcomparehour.png)
 
-##### 4. compareDay:
+##### 5. compareDay:
 Similar to compareHour but this enpoint compares at day level. And uses 2 sources
 First from this application's getDataDay endpoint, to get the average home temperature of the day.
 ```python
