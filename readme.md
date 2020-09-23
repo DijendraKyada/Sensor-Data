@@ -1,4 +1,4 @@
-# Final Project
+# Sensor Data (Python, Flask-API, Json)
 
 ## Overview:
 + Data Source: Home Sensor data [.txt files with lists in it]
